@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import css from "../App/App.module.css";
 import { fetchMovies } from "../../services/movieService";
 import SearchBar from "../SearchBar/SearchBar";
@@ -16,11 +16,12 @@ export default function App() {
   const [page, setPage] = useState(1);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [isMovieModalOpen, setIsMovieModalOpen] = useState(false);
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ["movies", query, page],
     queryFn: () => fetchMovies(query, page),
     enabled: !!query,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   const handleSubmit = (searchQuery: string) => {
@@ -36,7 +37,7 @@ export default function App() {
     setSelectedMovie(movie);
     openModal();
   };
-
+  const totalPages = data?.total_pages ?? 0;
   return (
     <>
       <Toaster position="top-right" />
@@ -47,12 +48,12 @@ export default function App() {
         !isError &&
         data?.results.length === 0 &&
         toast.error("No movie found for your request.")}
-      {!isLoading && !isError && data?.results.length > 0 && (
+      {!isLoading && !isError && data && data.results.length > 0 && (
         <>
           <MovieGrid onSelect={handleSelectMovie} movies={data.results} />
-          {data.total_pages > 1 && (
+          {totalPages > 1 && (
             <ReactPaginate
-              pageCount={data.total_pages}
+              pageCount={totalPages}
               pageRangeDisplayed={5}
               marginPagesDisplayed={1}
               onPageChange={({ selected }) => setPage(selected + 1)}
