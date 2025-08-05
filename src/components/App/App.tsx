@@ -38,6 +38,7 @@ export default function App() {
     openModal();
   };
   const totalPages = data?.total_pages ?? 0;
+  // для перевірки загальної кількості сторінок
   return (
     <>
       <Toaster position="top-right" />
