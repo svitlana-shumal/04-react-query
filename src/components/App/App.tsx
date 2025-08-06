@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import css from "../App/App.module.css";
 import { fetchMovies } from "../../services/movieService";
@@ -17,7 +17,7 @@ export default function App() {
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [isMovieModalOpen, setIsMovieModalOpen] = useState(false);
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, isSuccess } = useQuery({
     queryKey: ["movies", query, page],
     queryFn: () => fetchMovies(query, page),
     enabled: !!query,
@@ -38,17 +38,20 @@ export default function App() {
     openModal();
   };
   const totalPages = data?.total_pages ?? 0;
+
+  useEffect(() => {
+    if (isSuccess && data?.results.length === 0) {
+      toast.error("No movie found for your request.");
+    }
+  }, [isSuccess, data]);
+
   return (
     <>
       <Toaster position="top-right" />
       <SearchBar onSubmit={handleSubmit} />
       {isLoading && <Loader />}
       {isError && <ErrorMessage />}
-      {!isLoading &&
-        !isError &&
-        data?.results.length === 0 &&
-        toast.error("No movie found for your request.")}
-      {!isLoading && !isError && data && data.results.length > 0 && (
+      {isSuccess && data?.results.length > 0 && (
         <>
           <MovieGrid onSelect={handleSelectMovie} movies={data.results} />
           {totalPages > 1 && (
@@ -66,7 +69,6 @@ export default function App() {
           )}
         </>
       )}
-
       {isMovieModalOpen && selectedMovie && (
         <MovieModal movie={selectedMovie} onClose={closeModal} />
       )}
